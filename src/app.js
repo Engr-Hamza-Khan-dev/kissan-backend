@@ -10,13 +10,27 @@ const connectDB = require('./config/database');
 connectDB();
 
 // Middleware
-app.use(cors(
-  corsOptions = {
-    origin: 'localhost:3000', // Replace with your frontend URL
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  }
-));
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow specific origins
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      'https://kissan-frontend.vercel.app', // Add your frontend domain
+      
+    ];
+    
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Allow all for development
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  optionsSuccessStatus: 200
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(fileUpload({

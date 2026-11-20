@@ -156,10 +156,12 @@ const seedDatabase = async () => {
             subtotal: 2450
           }
         ],
+        subtotal: 2450,
         totalAmount: 2450,
-        status: 'completed',
-        paymentStatus: 'paid',
-        shippingAddress: {
+        orderStatus: 'DELIVERED',
+        paymentMethod: 'COD',
+        paymentStatus: 'PAID',
+        deliveryAddress: {
           address: '123 Farm Road',
           city: 'Lahore',
           province: 'Punjab'
@@ -177,10 +179,12 @@ const seedDatabase = async () => {
             subtotal: 890
           }
         ],
+        subtotal: 890,
         totalAmount: 890,
-        status: 'pending',
-        paymentStatus: 'pending',
-        shippingAddress: {
+        orderStatus: 'PENDING_VERIFICATION',
+        paymentMethod: 'COD',
+        paymentStatus: 'PENDING',
+        deliveryAddress: {
           address: '456 Village Road',
           city: 'Islamabad',
           province: 'Federal'
@@ -198,10 +202,12 @@ const seedDatabase = async () => {
             subtotal: 2400
           }
         ],
-        totalAmount: 1200,
-        status: 'completed',
-        paymentStatus: 'paid',
-        shippingAddress: {
+        subtotal: 2400,
+        totalAmount: 2400,
+        orderStatus: 'DELIVERED',
+        paymentMethod: 'ONLINE_PAYMENT',
+        paymentStatus: 'PAID',
+        deliveryAddress: {
           address: '789 Country Lane',
           city: 'Karachi',
           province: 'Sindh'
@@ -219,10 +225,12 @@ const seedDatabase = async () => {
             subtotal: 3500
           }
         ],
+        subtotal: 3500,
         totalAmount: 3500,
-        status: 'processing',
-        paymentStatus: 'pending',
-        shippingAddress: {
+        orderStatus: 'PROCESSING',
+        paymentMethod: 'COD',
+        paymentStatus: 'PENDING',
+        deliveryAddress: {
           address: '321 Agricultural Area',
           city: 'Faisalabad',
           province: 'Punjab'

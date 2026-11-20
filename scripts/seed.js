@@ -5,7 +5,7 @@ const seedDatabase = require('../src/services/seed');
 
 const main = async () => {
   try {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/khaity';
+    const mongoUri = process.env.MONGODB_URI;
     
     await mongoose.connect(mongoUri);
     console.log('✅ Connected to MongoDB');
