@@ -1,5 +1,6 @@
 const Admin = require('../models/Admin');
-const { generateToken, hashPassword, comparePassword } = require('../utils/helpers');
+const { generateToken, generateRefreshToken, hashPassword, comparePassword, getRefreshTokenExpiry } = require('../utils/helpers');
+const jwt = require('jsonwebtoken');
 
 // Admin Login
 exports.login = async (req, res) => {
@@ -20,14 +21,22 @@ exports.login = async (req, res) => {
 
     // Update last login
     admin.lastLogin = new Date();
-    await admin.save();
 
-    // Generate token
-    const token = generateToken(admin);
+    // Generate access token and refresh token
+    const accessToken = generateToken(admin);
+    const refreshToken = generateRefreshToken(admin);
+
+    // Store hashed refresh token in database
+    const hashedRefreshToken = require('bcryptjs').hashSync(refreshToken, 10);
+    admin.refreshTokenHash = hashedRefreshToken;
+    admin.refreshTokenExpiry = getRefreshTokenExpiry();
+
+    await admin.save();
 
     res.json({
       success: true,
-      token,
+      accessToken,
+      refreshToken,
       user: {
         id: admin._id,
         name: admin.name,
@@ -65,11 +74,21 @@ exports.register = async (req, res) => {
 
     await admin.save();
 
-    const token = generateToken(admin);
+    // Generate access token and refresh token
+    const accessToken = generateToken(admin);
+    const refreshToken = generateRefreshToken(admin);
+
+    // Store hashed refresh token in database
+    const hashedRefreshToken = require('bcryptjs').hashSync(refreshToken, 10);
+    admin.refreshTokenHash = hashedRefreshToken;
+    admin.refreshTokenExpiry = getRefreshTokenExpiry();
+
+    await admin.save();
 
     res.status(201).json({
       success: true,
-      token,
+      accessToken,
+      refreshToken,
       user: {
         id: admin._id,
         name: admin.name,
@@ -87,6 +106,70 @@ exports.getProfile = async (req, res) => {
   try {
     const admin = await Admin.findById(req.user.id).select('-password');
     res.json({ success: true, admin });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Refresh Access Token
+exports.refreshAccessToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({ error: 'Refresh token required' });
+    }
+
+    // Verify refresh token
+    let decoded;
+    try {
+      decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET || 'refresh-secret-key');
+    } catch (error) {
+      return res.status(401).json({ error: 'Invalid or expired refresh token' });
+    }
+
+    // Find admin
+    const admin = await Admin.findById(decoded.id);
+    if (!admin) {
+      return res.status(401).json({ error: 'Admin not found' });
+    }
+
+    // Check if refresh token is expired or no longer valid
+    if (!admin.refreshTokenHash || !admin.refreshTokenExpiry || new Date() > new Date(admin.refreshTokenExpiry)) {
+      return res.status(401).json({ error: 'Refresh token expired. Please login again' });
+    }
+
+    // Verify the refresh token matches the stored hash
+    const bcrypt = require('bcryptjs');
+    const isValidRefreshToken = bcrypt.compareSync(refreshToken, admin.refreshTokenHash);
+    if (!isValidRefreshToken) {
+      return res.status(401).json({ error: 'Invalid refresh token' });
+    }
+
+    // Generate new access token
+    const newAccessToken = generateToken(admin);
+
+    res.json({
+      success: true,
+      accessToken: newAccessToken
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Logout - Invalidate refresh token
+exports.logout = async (req, res) => {
+  try {
+    const adminId = req.user.id;
+
+    // Clear refresh token from database
+    await Admin.findByIdAndUpdate(adminId, {
+      refreshTokenHash: null,
+      refreshTokenExpiry: null
+    });
+
+    res.json({ success: true, message: 'Logged out successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

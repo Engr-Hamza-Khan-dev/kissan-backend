@@ -1,6 +1,10 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
+// Token expiry times from environment or defaults
+const ACCESS_TOKEN_EXPIRY = process.env.ACCESS_TOKEN_EXPIRY || '15m';
+const REFRESH_TOKEN_EXPIRY = process.env.REFRESH_TOKEN_EXPIRY || '7d';
+
 const generateToken = (user) => {
   return jwt.sign(
     {
@@ -10,7 +14,19 @@ const generateToken = (user) => {
       name: user.name
     },
     process.env.JWT_SECRET || 'your-secret-key',
-    { expiresIn: '7d' }
+    { expiresIn: ACCESS_TOKEN_EXPIRY }
+  );
+};
+
+const generateRefreshToken = (user) => {
+  return jwt.sign(
+    {
+      id: user._id,
+      email: user.email,
+      tokenVersion: user.tokenVersion || 0
+    },
+    process.env.REFRESH_TOKEN_SECRET || 'refresh-secret-key',
+    { expiresIn: REFRESH_TOKEN_EXPIRY }
   );
 };
 
@@ -96,8 +112,20 @@ const calculateSubtotal = (items) => {
   return items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 };
 
+const getRefreshTokenExpiry = () => {
+  // Parse REFRESH_TOKEN_EXPIRY to get number of days
+  // Default is 7 days if using '7d' format
+  const expiryMatch = REFRESH_TOKEN_EXPIRY.match(/^(\d+)d$/);
+  const days = expiryMatch ? parseInt(expiryMatch[1]) : 7;
+  
+  const expiryDate = new Date();
+  expiryDate.setDate(expiryDate.getDate() + days);
+  return expiryDate;
+};
+
 module.exports = {
   generateToken,
+  generateRefreshToken,
   hashPassword,
   comparePassword,
   generateOrderNumber,
@@ -108,5 +136,6 @@ module.exports = {
   generateWhatsAppURL,
   generateVerificationMessage,
   formatResponse,
-  calculateSubtotal
+  calculateSubtotal,
+  getRefreshTokenExpiry
 };

@@ -10,7 +10,13 @@ const connectDB = require('./config/database');
 connectDB();
 
 // Middleware
-app.use(cors());
+app.use(cors(
+  corsOptions = {
+    origin: 'localhost:3000', // Replace with your frontend URL
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  }
+));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(fileUpload({

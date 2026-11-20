@@ -26,6 +26,14 @@ const adminSchema = new mongoose.Schema({
     default: true
   },
   lastLogin: Date,
+  refreshTokenHash: {
+    type: String,
+    default: null
+  },
+  refreshTokenExpiry: {
+    type: Date,
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now
